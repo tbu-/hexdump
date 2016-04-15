@@ -16,42 +16,50 @@ const BUFFER_LENGTH: usize = 64;
 
 type BufferImpl = ArrayString<[u8; BUFFER_LENGTH]>;
 
+/// A single line of hexdump output.
+///
+/// Can be printed using the `{}` (`std::fmt::Display`) formatter.
 #[derive(Clone)]
-pub struct Buffer {
+pub struct Line {
     inner: BufferImpl,
 }
 
-impl Buffer {
-    fn new(inner: BufferImpl) -> Buffer {
-        Buffer { inner: inner }
+impl Line {
+    fn new(inner: BufferImpl) -> Line {
+        Line { inner: inner }
     }
 }
 
-impl fmt::Display for Buffer {
+impl fmt::Display for Line {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         (**self).fmt(f)
     }
 }
 
-impl fmt::Debug for Buffer {
+impl fmt::Debug for Line {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         (**self).fmt(f)
     }
 }
 
-impl ops::Deref for Buffer {
+impl ops::Deref for Line {
     type Target = str;
     fn deref(&self) -> &str {
         &self.inner
     }
 }
 
+/// Return type of `hexdump_iter`.
 pub struct Hexdump<'a> {
     len: usize,
     chunks: iter::Enumerate<slice::Chunks<'a, u8>>,
     summary_done: bool,
 }
 
+/// Sanitizes a byte for safe output.
+///
+/// Any printable ASCII character is returned verbatim (including the space
+/// character `' '`), for all other bytes, an ASCII dot `'.'` is returned.
 pub fn sanitize_byte(byte: u8) -> char {
     if 0x20 <= byte && byte < 0x7f {
         byte as char
@@ -60,10 +68,12 @@ pub fn sanitize_byte(byte: u8) -> char {
     }
 }
 
+/// Prints a hexdump of the given bytes to stdout.
 pub fn hexdump(bytes: &[u8]) {
     hexdump_iter(bytes).foreach(|s| println!("{}", s));
 }
 
+/// Creates a hexdump iterator that yields the individual lines.
 pub fn hexdump_iter(bytes: &[u8]) -> Hexdump {
     Hexdump::new(bytes)
 }
@@ -88,8 +98,8 @@ fn once<T,F:FnOnce()->T>(once: &mut bool, f: F) -> Option<T> {
 }
 
 impl<'a> Iterator for Hexdump<'a> {
-    type Item = Buffer;
-    fn next(&mut self) -> Option<Buffer> {
+    type Item = Line;
+    fn next(&mut self) -> Option<Line> {
         let summary_done = &mut self.summary_done;
         let len = self.len;
         self.chunks.next().map(hexdump_chunk)
@@ -101,7 +111,7 @@ impl<'a> Iterator for Hexdump<'a> {
 }
 
 impl<'a> DoubleEndedIterator for Hexdump<'a> {
-    fn next_back(&mut self) -> Option<Buffer> {
+    fn next_back(&mut self) -> Option<Line> {
         let chunks = &mut self.chunks;
         let len = self.len;
         once(&mut self.summary_done, || hexdump_summary(len))
@@ -115,7 +125,7 @@ impl<'a> ExactSizeIterator for Hexdump<'a> {
     }
 }
 
-fn hexdump_summary(len: usize) -> Buffer {
+fn hexdump_summary(len: usize) -> Line {
     let mut buf = BufferImpl::new();
     buf.write_str("    ").unwrap();
     for _ in 0..CHUNK_LENGTH {
@@ -126,10 +136,10 @@ fn hexdump_summary(len: usize) -> Buffer {
     }
     write!(buf, "{:08x}", len).unwrap();
 
-    Buffer::new(buf)
+    Line::new(buf)
 }
 
-fn hexdump_chunk((i, chunk): (usize, &[u8])) -> Buffer {
+fn hexdump_chunk((i, chunk): (usize, &[u8])) -> Line {
     let offset = i * CHUNK_LENGTH;
 
     let mut buf = BufferImpl::new();
@@ -175,7 +185,7 @@ fn hexdump_chunk((i, chunk): (usize, &[u8])) -> Buffer {
     buf.write_str(" ").unwrap();
     write!(buf, "{:08x}", offset).unwrap();
 
-    Buffer::new(buf)
+    Line::new(buf)
 }
 
 #[cfg(all(test, feature="nightly-test"))]
