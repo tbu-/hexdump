@@ -1,5 +1,4 @@
 use arrayvec::ArrayString;
-use itertools::Itertools;
 use std::fmt;
 use std::fmt::Write;
 use std::iter;
@@ -70,7 +69,9 @@ pub fn sanitize_byte(byte: u8) -> char {
 
 /// Prints a hexdump of the given bytes to stdout.
 pub fn hexdump(bytes: &[u8]) {
-    hexdump_iter(bytes).foreach(|s| println!("{}", s));
+    for s in hexdump_iter(bytes) {
+        println!("{}", s);
+    }
 }
 
 /// Creates a hexdump iterator that yields the individual lines.
@@ -194,8 +195,8 @@ mod test {
     use super::hexdump_iter;
     use super::sanitize_byte;
 
-    use itertools::Itertools;
     use std::collections::HashSet;
+    use std::convert::TryFrom;
 
     quickcheck! {
         fn length(bytes: Vec<u8>) -> bool {
@@ -217,7 +218,7 @@ mod test {
                 .filter(|&&b| 0x20 <= b && b < 0x7f)
                 .map(|&b| b as char)
                 .collect();
-            let lines = hexdump_iter(&bytes).map(|l| l.to_owned()).collect_vec();
+            let lines: Vec<_> = hexdump_iter(&bytes).map(|l| l.to_owned()).collect();
             let printed_chars: HashSet<_> = lines.iter()
                 .flat_map(|l| l.chars())
                 .collect();
@@ -234,9 +235,8 @@ mod test {
 
     #[test]
     fn test_sanitize_byte() {
-        use num::ToPrimitive;
         for i in 0..256u16 {
-            let i = i.to_u8().unwrap();
+            let i = u8::try_from(i).unwrap();
             assert!(sanitize_byte(i) == '.' || sanitize_byte(i) == i as char);
         }
     }

@@ -17,10 +17,8 @@
 #![warn(missing_docs)]
 
 #[cfg(test)] #[macro_use] extern crate quickcheck;
-#[cfg(test)] extern crate num;
 
 extern crate arrayvec;
-extern crate itertools;
 
 mod imp;
 
