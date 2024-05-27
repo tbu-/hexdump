@@ -188,56 +188,49 @@ fn hexdump_chunk((i, chunk): (usize, &[u8])) -> Line {
     Line::new(buf)
 }
 
-#[cfg(all(test, feature="nightly-test"))]
-mod test_nightly {
+#[cfg(test)]
+mod test {
     use super::CHUNK_LENGTH;
     use super::hexdump_iter;
+    use super::sanitize_byte;
 
     use itertools::Itertools;
     use std::collections::HashSet;
 
-    #[quickcheck]
-    fn length(bytes: Vec<u8>) -> bool {
-        let len = hexdump_iter(b"").next().unwrap().len();
-        hexdump_iter(&bytes).all(|s| s.len() == len)
+    quickcheck! {
+        fn length(bytes: Vec<u8>) -> bool {
+            let len = hexdump_iter(b"").next().unwrap().len();
+            hexdump_iter(&bytes).all(|s| s.len() == len)
+        }
+
+        fn ascii_only_no_cc(bytes: Vec<u8>) -> bool {
+            hexdump_iter(&bytes).all(|s| s.bytes().all(|b| 0x20 <= b && b < 0x7f))
+        }
+
+        fn summary(bytes: Vec<u8>) -> bool {
+            usize::from_str_radix(hexdump_iter(&bytes).last().unwrap().trim(), 16).ok()
+                == Some(bytes.len())
+        }
+
+        fn chars_existent(bytes: Vec<u8>) -> bool {
+            let printable_chars: HashSet<_> = bytes.iter()
+                .filter(|&&b| 0x20 <= b && b < 0x7f)
+                .map(|&b| b as char)
+                .collect();
+            let lines = hexdump_iter(&bytes).map(|l| l.to_owned()).collect_vec();
+            let printed_chars: HashSet<_> = lines.iter()
+                .flat_map(|l| l.chars())
+                .collect();
+
+            printable_chars.is_subset(&printed_chars)
+        }
+
+        fn line_count(bytes: Vec<u8>) -> bool {
+            let expected = (bytes.len() + CHUNK_LENGTH - 1) / CHUNK_LENGTH + 1;
+            hexdump_iter(&bytes).len() == expected
+                && hexdump_iter(&bytes).count() == expected
+        }
     }
-
-    #[quickcheck]
-    fn ascii_only_no_cc(bytes: Vec<u8>) -> bool {
-        hexdump_iter(&bytes).all(|s| s.bytes().all(|b| 0x20 <= b && b < 0x7f))
-    }
-
-    #[quickcheck]
-    fn summary(bytes: Vec<u8>) -> bool {
-        usize::from_str_radix(hexdump_iter(&bytes).last().unwrap().trim(), 16).ok()
-            == Some(bytes.len())
-    }
-
-    #[quickcheck]
-    fn chars_existent(bytes: Vec<u8>) -> bool {
-        let printable_chars: HashSet<_> = bytes.iter()
-            .filter(|&&b| 0x20 <= b && b < 0x7f)
-            .map(|&b| b as char)
-            .collect();
-        let lines = hexdump_iter(&bytes).map(|l| l.to_owned()).collect_vec();
-        let printed_chars: HashSet<_> = lines.iter()
-            .flat_map(|l| l.chars())
-            .collect();
-
-        printable_chars.is_subset(&printed_chars)
-    }
-
-    #[quickcheck]
-    fn line_count(bytes: Vec<u8>) -> bool {
-        let expected = (bytes.len() + CHUNK_LENGTH - 1) / CHUNK_LENGTH + 1;
-        hexdump_iter(&bytes).len() == expected
-            && hexdump_iter(&bytes).count() == expected
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::sanitize_byte;
 
     #[test]
     fn test_sanitize_byte() {
