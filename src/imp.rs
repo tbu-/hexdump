@@ -9,7 +9,7 @@ const SEGMENT_LENGTH: usize = 4;
 // CHUNK_LENGTH should be a multiple of SEGMENT_LENGTH
 const CHUNK_LENGTH: usize = 16;
 
-const NUM_SEGMENTS_PER_CHUNK: usize = ((CHUNK_LENGTH + SEGMENT_LENGTH - 1) / SEGMENT_LENGTH);
+const NUM_SEGMENTS_PER_CHUNK: usize = (CHUNK_LENGTH + SEGMENT_LENGTH - 1) / SEGMENT_LENGTH;
 
 const BUFFER_LENGTH: usize = 64;
 
