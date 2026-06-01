@@ -13,7 +13,7 @@ const NUM_SEGMENTS_PER_CHUNK: usize = (CHUNK_LENGTH + SEGMENT_LENGTH - 1) / SEGM
 
 const BUFFER_LENGTH: usize = 64;
 
-type BufferImpl = ArrayString<[u8; BUFFER_LENGTH]>;
+type BufferImpl = ArrayString<BUFFER_LENGTH>;
 
 /// A single line of hexdump output.
 ///
