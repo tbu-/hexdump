@@ -75,12 +75,12 @@ pub fn hexdump(bytes: &[u8]) {
 }
 
 /// Creates a hexdump iterator that yields the individual lines.
-pub fn hexdump_iter(bytes: &[u8]) -> Hexdump {
+pub fn hexdump_iter(bytes: &[u8]) -> Hexdump<'_> {
     Hexdump::new(bytes)
 }
 
 impl<'a> Hexdump<'a> {
-    fn new(bytes: &[u8]) -> Hexdump {
+    fn new(bytes: &[u8]) -> Hexdump<'_> {
         Hexdump {
             len: bytes.len(),
             chunks: bytes.chunks(CHUNK_LENGTH).enumerate(),
