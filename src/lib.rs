@@ -3,7 +3,6 @@
 //! # Example
 //!
 //! ```
-//! extern crate hexdump;
 //! hexdump::hexdump(b"12345\0\r\n\t .abcdef");
 //! ```
 //! prints
@@ -17,8 +16,6 @@
 #![warn(missing_docs)]
 
 #[cfg(test)] #[macro_use] extern crate quickcheck;
-
-extern crate arrayvec;
 
 mod imp;
 
