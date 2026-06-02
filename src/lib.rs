@@ -15,12 +15,14 @@
 
 #![warn(missing_docs)]
 
-#[cfg(test)] #[macro_use] extern crate quickcheck;
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
 
 mod imp;
 
-pub use imp::Line;
-pub use imp::Hexdump;
 pub use imp::hexdump;
 pub use imp::hexdump_iter;
 pub use imp::sanitize_byte;
+pub use imp::Hexdump;
+pub use imp::Line;

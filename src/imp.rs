@@ -89,7 +89,7 @@ impl<'a> Hexdump<'a> {
     }
 }
 
-fn once<T,F:FnOnce()->T>(once: &mut bool, f: F) -> Option<T> {
+fn once<T, F: FnOnce() -> T>(once: &mut bool, f: F) -> Option<T> {
     if !*once {
         *once = true;
         Some(f())
@@ -103,7 +103,9 @@ impl<'a> Iterator for Hexdump<'a> {
     fn next(&mut self) -> Option<Line> {
         let summary_done = &mut self.summary_done;
         let len = self.len;
-        self.chunks.next().map(hexdump_chunk)
+        self.chunks
+            .next()
+            .map(hexdump_chunk)
             .or_else(|| once(summary_done, || hexdump_summary(len)))
     }
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -191,9 +193,9 @@ fn hexdump_chunk((i, chunk): (usize, &[u8])) -> Line {
 
 #[cfg(test)]
 mod test {
-    use super::CHUNK_LENGTH;
     use super::hexdump_iter;
     use super::sanitize_byte;
+    use super::CHUNK_LENGTH;
 
     use std::collections::HashSet;
     use std::convert::TryFrom;
